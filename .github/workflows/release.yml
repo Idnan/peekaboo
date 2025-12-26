@@ -101,53 +101,24 @@ jobs:
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
-          ZIP_NAME="${{ env.APP_NAME }}-${{ env.VERSION }}.zip"
-          FILE_SIZE=$(stat -f%z "$ZIP_NAME")
-          PUB_DATE=$(date "+%a, %d %b %Y %H:%M:%S %z")
-          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}/$ZIP_NAME"
-          
-          # Sign the update with Sparkle
-          if [ -n "$SPARKLE_PRIVATE_KEY" ]; then
-            echo "$SPARKLE_PRIVATE_KEY" > /tmp/sparkle_private_key
-            SIGNATURE=$(/tmp/Sparkle/bin/sign_update "$ZIP_NAME" -f /tmp/sparkle_private_key | grep "sparkle:edSignature" | sed 's/.*sparkle:edSignature="\([^"]*\)".*/\1/')
-            rm /tmp/sparkle_private_key
-          else
-            echo "Warning: SPARKLE_PRIVATE_KEY not set, using placeholder"
-            SIGNATURE="SIGNATURE_NOT_SET"
+          # Write private key to temp file
+          if [ -z "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "::error::SPARKLE_PRIVATE_KEY secret not set"
+            exit 1
           fi
+          echo "$SPARKLE_PRIVATE_KEY" > /tmp/sparkle_private_key
           
-          # Create new appcast item
-          NEW_ITEM=$(cat << EOF
-    <item>
-      <title>Version ${{ env.VERSION }}</title>
-      <pubDate>$PUB_DATE</pubDate>
-      <sparkle:version>${{ env.VERSION }}</sparkle:version>
-      <sparkle:shortVersionString>${{ env.VERSION }}</sparkle:shortVersionString>
-      <description><![CDATA[
-        <h2>What's New in ${{ env.VERSION }}</h2>
-        <p>See GitHub release notes for details.</p>
-      ]]></description>
-      <enclosure 
-        url="$DOWNLOAD_URL"
-        length="$FILE_SIZE"
-        type="application/octet-stream"
-        sparkle:edSignature="$SIGNATURE" />
-    </item>
-EOF
-)
+          # Generate appcast item using script
+          ZIP_NAME="${{ env.APP_NAME }}-${{ env.VERSION }}.zip"
+          NEW_ITEM=$(./scripts/generate-appcast.sh "${{ env.VERSION }}" "$ZIP_NAME" "https://github.com/${{ github.repository }}" /tmp/sparkle_private_key)
           
-          # Update appcast.xml - insert new item after <language>en</language>
-          awk -v new_item="$NEW_ITEM" '
-            /<language>en<\/language>/ {
-              print
-              print ""
-              print new_item
-              next
-            }
-            { print }
-          ' appcast.xml > appcast.xml.tmp && mv appcast.xml.tmp appcast.xml
+          # Clean up
+          rm -f /tmp/sparkle_private_key
           
-          echo "Updated appcast.xml with new version"
+          # Insert new item into appcast.xml after <language>en</language>
+          awk -v item="$NEW_ITEM" '/<language>en<\/language>/{print;print"";print item;next}1' appcast.xml > appcast.xml.tmp
+          mv appcast.xml.tmp appcast.xml
+          
           cat appcast.xml
 
       - name: Commit updated appcast
