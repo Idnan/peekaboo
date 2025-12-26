@@ -115,19 +115,26 @@ jobs:
           # Clean up private key
           rm -f /tmp/sparkle_private_key
           
-          # Insert new item into appcast.xml after <language>en</language>
-          sed -i '' '/<language>en<\/language>/r /tmp/new_item.xml' appcast.xml
-          
-          rm -f /tmp/new_item.xml
-          cat appcast.xml
+          cat /tmp/new_item.xml
 
       - name: Commit updated appcast
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Fetch latest main and apply change there
+          git fetch origin main
+          git checkout main
+          
+          # Insert new item into appcast.xml after <language>en</language>
+          sed -i '' '/<language>en<\/language>/r /tmp/new_item.xml' appcast.xml
+          rm -f /tmp/new_item.xml
+          
+          cat appcast.xml
+          
           git add appcast.xml
-          git commit -m "Update appcast.xml for v${{ env.VERSION }}" || echo "No changes to commit"
-          git push origin HEAD:main
+          git diff --cached --quiet || git commit -m "Update appcast.xml for v${{ env.VERSION }}"
+          git push origin main
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
