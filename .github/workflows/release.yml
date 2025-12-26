@@ -58,17 +58,28 @@ jobs:
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
           
           # Decode certificate
-          echo -n "$P12_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+          echo "$P12_BASE64" | base64 --decode > $CERTIFICATE_PATH
           
           # Create temporary keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           
-          # Import certificate
-          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security list-keychain -d user -s $KEYCHAIN_PATH
+          # Import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH -T /usr/bin/codesign -T /usr/bin/security
+          
+          # Allow codesign to access the keychain
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          
+          # Add keychain to search list (prepend to make it first)
+          security list-keychain -d user -s $KEYCHAIN_PATH $(security list-keychain -d user | tr -d '"')
+          
+          # Set as default keychain
+          security default-keychain -s $KEYCHAIN_PATH
+          
+          # Verify certificate is installed
+          echo "Installed certificates:"
+          security find-identity -v -p codesigning $KEYCHAIN_PATH
 
       - name: Update version in project
         run: |
@@ -81,7 +92,12 @@ jobs:
       - name: Build and Sign
         env:
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          KEYCHAIN_PATH: ${{ runner.temp }}/app-signing.keychain-db
         run: |
+          # Find the exact certificate name
+          CERT_NAME=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "Using certificate: $CERT_NAME"
+          
           xcodebuild -project ${{ env.APP_NAME }}.xcodeproj \
             -scheme ${{ env.SCHEME }} \
             -configuration Release \
@@ -89,8 +105,9 @@ jobs:
             -arch arm64 -arch x86_64 \
             ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Developer ID Application" \
+            CODE_SIGN_IDENTITY="$CERT_NAME" \
             DEVELOPMENT_TEAM="$TEAM_ID" \
+            OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
             build
 
       - name: Notarize app
@@ -143,7 +160,9 @@ jobs:
           fi
           
           # Sign and notarize the DMG too
-          codesign --force --sign "Developer ID Application" "$DMG_NAME"
+          KEYCHAIN_PATH=${{ runner.temp }}/app-signing.keychain-db
+          CERT_NAME=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          codesign --force --sign "$CERT_NAME" --keychain "$KEYCHAIN_PATH" "$DMG_NAME"
           xcrun notarytool submit "$DMG_NAME" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_ID_PASSWORD" \
