@@ -110,15 +110,15 @@ jobs:
           
           # Generate appcast item using script
           ZIP_NAME="${{ env.APP_NAME }}-${{ env.VERSION }}.zip"
-          NEW_ITEM=$(./scripts/generate-appcast.sh "${{ env.VERSION }}" "$ZIP_NAME" "https://github.com/${{ github.repository }}" /tmp/sparkle_private_key)
+          ./scripts/generate-appcast.sh "${{ env.VERSION }}" "$ZIP_NAME" "https://github.com/${{ github.repository }}" /tmp/sparkle_private_key > /tmp/new_item.xml
           
-          # Clean up
+          # Clean up private key
           rm -f /tmp/sparkle_private_key
           
           # Insert new item into appcast.xml after <language>en</language>
-          awk -v item="$NEW_ITEM" '/<language>en<\/language>/{print;print"";print item;next}1' appcast.xml > appcast.xml.tmp
-          mv appcast.xml.tmp appcast.xml
+          sed -i '' '/<language>en<\/language>/r /tmp/new_item.xml' appcast.xml
           
+          rm -f /tmp/new_item.xml
           cat appcast.xml
 
       - name: Commit updated appcast
