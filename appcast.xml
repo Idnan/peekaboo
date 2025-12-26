@@ -6,6 +6,66 @@
     <description>Most recent updates to Peekaboo</description>
     <language>en</language>
     <item>
+      <title>Version 1.0.6</title>
+      <pubDate>Fri, 26 Dec 2025 06:37:28 +0000</pubDate>
+      <sparkle:version>1.0.6</sparkle:version>
+      <sparkle:shortVersionString>1.0.6</sparkle:shortVersionString>
+      <description><![CDATA[
+        <h2>What's New in 1.0.6</h2>
+        <p>See GitHub release notes for details.</p>
+      ]]></description>
+      <enclosure 
+        url="https://github.com/Idnan/peekaboo/releases/download/v1.0.6/Peekaboo-1.0.6.zip"
+        length="1097675"
+        type="application/octet-stream"
+        sparkle:edSignature="sparkle:edSignature="Kb0kxMFb5NIh3iniRFLYQqay7+cd7GnC6GOh5Wr5g6h1lnh5hmgvPt5LqO7COJtMrz4UcAF+qbdV7jiW/kwaBg==" length="1097675"" />
+    </item>
+    <item>
+      <title>Version 1.0.5</title>
+      <pubDate>Fri, 26 Dec 2025 06:29:23 +0000</pubDate>
+      <sparkle:version>1.0.5</sparkle:version>
+      <sparkle:shortVersionString>1.0.5</sparkle:shortVersionString>
+      <description><![CDATA[
+        <h2>What's New in 1.0.5</h2>
+        <p>See GitHub release notes for details.</p>
+      ]]></description>
+      <enclosure 
+        url="https://github.com/Idnan/peekaboo/releases/download/v1.0.5/Peekaboo-1.0.5.zip"
+        length="1425369"
+        type="application/octet-stream"
+        sparkle:edSignature="sparkle:edSignature="xCpSBOrQ2w2YdrDTXEJZj2dlAa7FiNXcJbtMVsm77nZTnvkw/Gt56lxNEUl5ezJiG5sS0lx11ogtiv5sar+EDQ==" length="1425369"" />
+    </item>
+    <item>
+      <title>Version 1.0.4</title>
+      <pubDate>Fri, 26 Dec 2025 06:19:59 +0000</pubDate>
+      <sparkle:version>1.0.4</sparkle:version>
+      <sparkle:shortVersionString>1.0.4</sparkle:shortVersionString>
+      <description><![CDATA[
+        <h2>What's New in 1.0.4</h2>
+        <p>See GitHub release notes for details.</p>
+      ]]></description>
+      <enclosure 
+        url="https://github.com/Idnan/peekaboo/releases/download/v1.0.4/Peekaboo-1.0.4.zip"
+        length="1097737"
+        type="application/octet-stream"
+        sparkle:edSignature="sparkle:edSignature="jxHQ44wVKx66WErMgxCERr2fXGFS58OXUGN53jt1aUxk5kgtkdaRTRNdhuhwpE2n0t9my644mT2HX254NW9RBg==" length="1097737"" />
+    </item>
+    <item>
+      <title>Version 1.0.3</title>
+      <pubDate>Fri, 26 Dec 2025 06:15:30 +0000</pubDate>
+      <sparkle:version>1.0.3</sparkle:version>
+      <sparkle:shortVersionString>1.0.3</sparkle:shortVersionString>
+      <description><![CDATA[
+        <h2>What's New in 1.0.3</h2>
+        <p>See GitHub release notes for details.</p>
+      ]]></description>
+      <enclosure 
+        url="https://github.com/Idnan/peekaboo/releases/download/v1.0.3/Peekaboo-1.0.3.zip"
+        length="1097680"
+        type="application/octet-stream"
+        sparkle:edSignature="sparkle:edSignature="HD5Xkobeiu/u+hHUfq8b+WkSzdPzhsOepNIpMYtrBjs5jreNBh2ni2rynbU7SzxUMDjOYDcTkeGM49xxhZOdDg==" length="1097680"" />
+    </item>
+    <item>
       <title>Version 1.0.2</title>
       <pubDate>Fri, 26 Dec 2025 04:18:52 +0000</pubDate>
       <sparkle:version>1.0.2</sparkle:version>
