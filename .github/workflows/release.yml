@@ -1,0 +1,180 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+
+env:
+  APP_NAME: Peekaboo
+  SCHEME: Peekaboo
+
+jobs:
+  build:
+    runs-on: macos-14
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set version from tag or input
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          else
+            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+          fi
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install tools
+        run: |
+          brew install create-dmg
+          # Download Sparkle for signing tools
+          curl -L -o /tmp/Sparkle.tar.xz https://github.com/sparkle-project/Sparkle/releases/download/2.6.4/Sparkle-2.6.4.tar.xz
+          mkdir -p /tmp/Sparkle
+          tar -xf /tmp/Sparkle.tar.xz -C /tmp/Sparkle
+
+      - name: Update version in project
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" Peekaboo/Resources/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" Peekaboo/Resources/Info.plist
+
+      - name: Resolve Swift Package Dependencies
+        run: xcodebuild -resolvePackageDependencies -project ${{ env.APP_NAME }}.xcodeproj -scheme ${{ env.SCHEME }}
+
+      - name: Build
+        run: |
+          xcodebuild -project ${{ env.APP_NAME }}.xcodeproj \
+            -scheme ${{ env.SCHEME }} \
+            -configuration Release \
+            -derivedDataPath build \
+            -arch arm64 -arch x86_64 \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Create DMG
+        run: |
+          APP_PATH="build/Build/Products/Release/${{ env.APP_NAME }}.app"
+          DMG_NAME="${{ env.APP_NAME }}-${{ env.VERSION }}.dmg"
+          
+          create-dmg \
+            --volname "${{ env.APP_NAME }}" \
+            --volicon "$APP_PATH/Contents/Resources/AppIcon.icns" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "${{ env.APP_NAME }}.app" 150 185 \
+            --hide-extension "${{ env.APP_NAME }}.app" \
+            --app-drop-link 450 185 \
+            "$DMG_NAME" \
+            "$APP_PATH" || true
+          
+          # Fallback if create-dmg fails
+          if [ ! -f "$DMG_NAME" ]; then
+            hdiutil create -volname "${{ env.APP_NAME }}" -srcfolder "$APP_PATH" -ov -format UDZO "$DMG_NAME"
+          fi
+
+      - name: Create ZIP
+        run: |
+          APP_PATH="build/Build/Products/Release/${{ env.APP_NAME }}.app"
+          ZIP_NAME="${{ env.APP_NAME }}-${{ env.VERSION }}.zip"
+          cd "build/Build/Products/Release"
+          zip -r -y "../../../../$ZIP_NAME" "${{ env.APP_NAME }}.app"
+
+      - name: Sign update and generate appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          ZIP_NAME="${{ env.APP_NAME }}-${{ env.VERSION }}.zip"
+          FILE_SIZE=$(stat -f%z "$ZIP_NAME")
+          PUB_DATE=$(date "+%a, %d %b %Y %H:%M:%S %z")
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}/$ZIP_NAME"
+          
+          # Sign the update with Sparkle
+          if [ -n "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "$SPARKLE_PRIVATE_KEY" > /tmp/sparkle_private_key
+            SIGNATURE=$(/tmp/Sparkle/bin/sign_update "$ZIP_NAME" -f /tmp/sparkle_private_key | grep "sparkle:edSignature" | sed 's/.*sparkle:edSignature="\([^"]*\)".*/\1/')
+            rm /tmp/sparkle_private_key
+          else
+            echo "Warning: SPARKLE_PRIVATE_KEY not set, using placeholder"
+            SIGNATURE="SIGNATURE_NOT_SET"
+          fi
+          
+          # Create new appcast item
+          NEW_ITEM=$(cat << EOF
+    <item>
+      <title>Version ${{ env.VERSION }}</title>
+      <pubDate>$PUB_DATE</pubDate>
+      <sparkle:version>${{ env.VERSION }}</sparkle:version>
+      <sparkle:shortVersionString>${{ env.VERSION }}</sparkle:shortVersionString>
+      <description><![CDATA[
+        <h2>What's New in ${{ env.VERSION }}</h2>
+        <p>See GitHub release notes for details.</p>
+      ]]></description>
+      <enclosure 
+        url="$DOWNLOAD_URL"
+        length="$FILE_SIZE"
+        type="application/octet-stream"
+        sparkle:edSignature="$SIGNATURE" />
+    </item>
+EOF
+)
+          
+          # Update appcast.xml - insert new item after <language>en</language>
+          awk -v new_item="$NEW_ITEM" '
+            /<language>en<\/language>/ {
+              print
+              print ""
+              print new_item
+              next
+            }
+            { print }
+          ' appcast.xml > appcast.xml.tmp && mv appcast.xml.tmp appcast.xml
+          
+          echo "Updated appcast.xml with new version"
+          cat appcast.xml
+
+      - name: Commit updated appcast
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add appcast.xml
+          git commit -m "Update appcast.xml for v${{ env.VERSION }}" || echo "No changes to commit"
+          git push origin HEAD:main
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: |
+            *.dmg
+            *.zip
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            *.dmg
+            *.zip
+          draft: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

@@ -1,4 +1,5 @@
 import AppKit
+import Sparkle
 
 class MenuBarController {
     private var statusItem: NSStatusItem?
@@ -37,6 +38,10 @@ class MenuBarController {
         preferencesItem.target = self
         menu?.addItem(preferencesItem)
         
+        let checkForUpdatesItem = NSMenuItem(title: "Check for Updates...", action: #selector(checkForUpdatesClicked), keyEquivalent: "")
+        checkForUpdatesItem.target = self
+        menu?.addItem(checkForUpdatesItem)
+        
         menu?.addItem(NSMenuItem.separator())
         
         let quitItem = NSMenuItem(title: "Quit Peekaboo", action: #selector(quitClicked), keyEquivalent: "q")
@@ -64,6 +69,10 @@ class MenuBarController {
     
     @objc private func preferencesClicked() {
         onPreferences?()
+    }
+    
+    @objc private func checkForUpdatesClicked() {
+        UpdateManager.shared.checkForUpdates()
     }
     
     @objc private func quitClicked() {

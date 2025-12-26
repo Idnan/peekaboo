@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		41C3E1A42EFE3CAD0002A60B /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 41C3E1A32EFE3CAD0002A60B /* Sparkle */; };
+		41C3E1A62EFE3CDD0002A60B /* UpdateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41C3E1A52EFE3CDD0002A60B /* UpdateManager.swift */; };
 		A1000001232323230000001 /* PeekabooApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001232323230000011 /* PeekabooApp.swift */; };
 		A1000001232323230000002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001232323230000012 /* AppDelegate.swift */; };
 		A1000001232323230000003 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001232323230000013 /* MenuBarController.swift */; };
@@ -24,6 +26,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		41C3E1A52EFE3CDD0002A60B /* UpdateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateManager.swift; sourceTree = "<group>"; };
 		A1000001232323230000011 /* PeekabooApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeekabooApp.swift; sourceTree = "<group>"; };
 		A1000001232323230000012 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A1000001232323230000013 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
@@ -48,6 +51,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				41C3E1A42EFE3CAD0002A60B /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -115,6 +119,7 @@
 		A1000001232323230000036 /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				41C3E1A52EFE3CDD0002A60B /* UpdateManager.swift */,
 				A1000001232323230000014 /* DesktopManager.swift */,
 				A1000001232323230000017 /* GlobalHotkeyManager.swift */,
 				A100000123232323000001A /* LaunchAtLoginManager.swift */,
@@ -185,6 +190,9 @@
 				Base,
 			);
 			mainGroup = A1000001232323230000030;
+			packageReferences = (
+				41C3E1A22EFE3CAD0002A60B /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			productRefGroup = A1000001232323230000032 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -218,6 +226,7 @@
 				A1000001232323230000006 /* HUDWindowController.swift in Sources */,
 				A1000001232323230000007 /* GlobalHotkeyManager.swift in Sources */,
 				A1000001232323230000008 /* PreferencesView.swift in Sources */,
+				41C3E1A62EFE3CDD0002A60B /* UpdateManager.swift in Sources */,
 				A1000001232323230000009 /* PreferencesWindowController.swift in Sources */,
 				A100000123232323000000A /* LaunchAtLoginManager.swift in Sources */,
 				A100000123232323000000B /* Settings.swift in Sources */,
@@ -423,6 +432,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		41C3E1A22EFE3CAD0002A60B /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.8.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		41C3E1A32EFE3CAD0002A60B /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 41C3E1A22EFE3CAD0002A60B /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A1000001232323230000041 /* Project object */;
 }

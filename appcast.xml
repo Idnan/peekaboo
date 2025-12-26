@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Peekaboo Updates</title>
+    <link>https://github.com/idnan/peekaboo</link>
+    <description>Most recent updates to Peekaboo</description>
+    <language>en</language>
+
+    <!-- Add new versions here, newest first -->
+
+  </channel>
+</rss>
+

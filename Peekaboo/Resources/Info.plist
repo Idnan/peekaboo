@@ -32,5 +32,9 @@
 	<string>Copyright © 2024 idnan. All rights reserved.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/idnan/peekaboo/main/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>3+nBcwr8k4kfFUS2xef9IQl/plTdEO9/KP+bDI1UVbo=</string>
 </dict>
 </plist>
