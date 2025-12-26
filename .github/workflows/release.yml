@@ -78,8 +78,12 @@ jobs:
           security default-keychain -s $KEYCHAIN_PATH
           
           # Verify certificate is installed
-          echo "Installed certificates:"
+          echo "Installed certificates in keychain:"
           security find-identity -v -p codesigning $KEYCHAIN_PATH
+          
+          # Also check default keychain
+          echo "All available signing identities:"
+          security find-identity -v -p codesigning
 
       - name: Update version in project
         run: |
@@ -109,8 +113,18 @@ jobs:
         run: |
           APP_PATH="build/Build/Products/Release/${{ env.APP_NAME }}.app"
           
+          # Debug: show all identities
+          echo "Available signing identities:"
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+          
           # Find the exact certificate name
-          CERT_NAME=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          CERT_NAME=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
+          
+          if [ -z "$CERT_NAME" ]; then
+            echo "Error: Could not find Developer ID Application certificate"
+            exit 1
+          fi
+          
           echo "Using certificate: $CERT_NAME"
           
           # Sign all nested components first (Sparkle XPC services, helpers, etc.)
