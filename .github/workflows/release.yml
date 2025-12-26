@@ -121,17 +121,32 @@ jobs:
           # Create ZIP for notarization
           ditto -c -k --keepParent "$APP_PATH" "/tmp/notarize.zip"
           
-          # Submit for notarization
-          xcrun notarytool submit "/tmp/notarize.zip" \
+          # Submit for notarization and capture output
+          SUBMISSION_OUTPUT=$(xcrun notarytool submit "/tmp/notarize.zip" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_ID_PASSWORD" \
             --team-id "$TEAM_ID" \
-            --wait
+            --wait 2>&1) || true
           
-          # Staple the ticket to the app
-          xcrun stapler staple "$APP_PATH"
+          echo "$SUBMISSION_OUTPUT"
           
-          echo "Notarization complete!"
+          # Extract submission ID
+          SUBMISSION_ID=$(echo "$SUBMISSION_OUTPUT" | grep "id:" | head -1 | awk '{print $2}')
+          
+          # Check if notarization succeeded
+          if echo "$SUBMISSION_OUTPUT" | grep -q "status: Accepted"; then
+            echo "Notarization successful!"
+            xcrun stapler staple "$APP_PATH"
+          else
+            echo "Notarization failed. Fetching log..."
+            xcrun notarytool log "$SUBMISSION_ID" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_ID_PASSWORD" \
+              --team-id "$TEAM_ID" \
+              notarization-log.json
+            cat notarization-log.json
+            exit 1
+          fi
 
       - name: Create DMG
         env:
