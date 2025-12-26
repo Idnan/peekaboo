@@ -85,3 +85,6 @@ playground.xcworkspace
 !*.xcodeproj/xcshareddata/
 !*.xcworkspace/contents.xcworkspacedata
 !*.xcworkspace/xcshareddata/
+
+.idea/
+.claude/
