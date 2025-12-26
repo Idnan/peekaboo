@@ -6,6 +6,21 @@
     <description>Most recent updates to Peekaboo</description>
     <language>en</language>
     <item>
+      <title>Version 1.0.6</title>
+      <pubDate>Fri, 26 Dec 2025 06:37:28 +0000</pubDate>
+      <sparkle:version>1.0.6</sparkle:version>
+      <sparkle:shortVersionString>1.0.6</sparkle:shortVersionString>
+      <description><![CDATA[
+        <h2>What's New in 1.0.6</h2>
+        <p>See GitHub release notes for details.</p>
+      ]]></description>
+      <enclosure 
+        url="https://github.com/Idnan/peekaboo/releases/download/v1.0.6/Peekaboo-1.0.6.zip"
+        length="1097675"
+        type="application/octet-stream"
+        sparkle:edSignature="sparkle:edSignature="Kb0kxMFb5NIh3iniRFLYQqay7+cd7GnC6GOh5Wr5g6h1lnh5hmgvPt5LqO7COJtMrz4UcAF+qbdV7jiW/kwaBg==" length="1097675"" />
+    </item>
+    <item>
       <title>Version 1.0.5</title>
       <pubDate>Fri, 26 Dec 2025 06:29:23 +0000</pubDate>
       <sparkle:version>1.0.5</sparkle:version>
