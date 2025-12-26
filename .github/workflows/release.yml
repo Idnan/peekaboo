@@ -89,26 +89,60 @@ jobs:
       - name: Resolve Swift Package Dependencies
         run: xcodebuild -resolvePackageDependencies -project ${{ env.APP_NAME }}.xcodeproj -scheme ${{ env.SCHEME }}
 
-      - name: Build and Sign
-        env:
-          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          KEYCHAIN_PATH: ${{ runner.temp }}/app-signing.keychain-db
+      - name: Build
         run: |
-          # Find the exact certificate name
-          CERT_NAME=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
-          echo "Using certificate: $CERT_NAME"
-          
           xcodebuild -project ${{ env.APP_NAME }}.xcodeproj \
             -scheme ${{ env.SCHEME }} \
             -configuration Release \
             -derivedDataPath build \
             -arch arm64 -arch x86_64 \
             ONLY_ACTIVE_ARCH=NO \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="$CERT_NAME" \
-            DEVELOPMENT_TEAM="$TEAM_ID" \
-            OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
             build
+
+      - name: Sign app bundle
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          KEYCHAIN_PATH: ${{ runner.temp }}/app-signing.keychain-db
+        run: |
+          APP_PATH="build/Build/Products/Release/${{ env.APP_NAME }}.app"
+          
+          # Find the exact certificate name
+          CERT_NAME=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "Using certificate: $CERT_NAME"
+          
+          # Sign all nested components first (Sparkle XPC services, helpers, etc.)
+          find "$APP_PATH" -type f \( -name "*.dylib" -o -perm +111 \) | while read -r binary; do
+            echo "Signing: $binary"
+            codesign --force --options runtime --timestamp --sign "$CERT_NAME" --keychain "$KEYCHAIN_PATH" "$binary" 2>/dev/null || true
+          done
+          
+          # Sign XPC services
+          find "$APP_PATH" -name "*.xpc" -type d | while read -r xpc; do
+            echo "Signing XPC: $xpc"
+            codesign --force --options runtime --timestamp --sign "$CERT_NAME" --keychain "$KEYCHAIN_PATH" "$xpc"
+          done
+          
+          # Sign nested apps (like Sparkle Updater.app)
+          find "$APP_PATH" -name "*.app" -type d -mindepth 1 | while read -r nested_app; do
+            echo "Signing nested app: $nested_app"
+            codesign --force --options runtime --timestamp --sign "$CERT_NAME" --keychain "$KEYCHAIN_PATH" "$nested_app"
+          done
+          
+          # Sign frameworks
+          find "$APP_PATH" -name "*.framework" -type d | while read -r framework; do
+            echo "Signing framework: $framework"
+            codesign --force --options runtime --timestamp --sign "$CERT_NAME" --keychain "$KEYCHAIN_PATH" "$framework"
+          done
+          
+          # Finally sign the main app
+          codesign --force --options runtime --timestamp --sign "$CERT_NAME" --keychain "$KEYCHAIN_PATH" "$APP_PATH"
+          
+          # Verify
+          echo "Verifying signature..."
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
       - name: Notarize app
         env:
